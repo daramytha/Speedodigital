@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">OBD2 Sport Dashboard</string>
+    <string name="rpm_label">M S</string>
+    <string name="dynamic_label">DYNAMIC</string>
+    <string name="speed_unit">km/h</string>
+    <string name="g_meter_title">G meter</string>
+    <string name="reset_text">Reset values with OK</string>
+</resources>
