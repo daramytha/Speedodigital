@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0A0A0A"
+    android:padding="16dp">
+
+    <!-- TOP STATUS / INFO BAR -->
+    <LinearLayout
+        android:id="@+id/layoutTopInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⛽ 360 km"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:layout_marginEnd="24dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🎵 RTHK 1"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"/>
+    </LinearLayout>
+
+    <!-- LEFT: TACHOMETER (RPM GAUGE) -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardRpm"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:cardBackgroundColor="#121212"
+        app:cardCornerRadius="120dp"
+        app:cardElevation="8dp"
+        app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintWidth_percent="0.38"
+        app:layout_constraintTop_toBottomOf="@id/layoutTopInfo"
+        app:layout_constraintBottom_toTopOf="@id/layoutBottomInfo"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/tvRpmLabel"
+                android:layout_width="wrap_content"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginTop="32dp"
+                android:layout_height="wrap_content"
+                android:text="M S"
+                android:textStyle="bold"
+                android:textColor="#E53935"
+                android:letterSpacing="0.2"
+                android:textSize="28sp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/tvRpmLabel"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:text="DYNAMIC"
+                android:textColor="#E53935"
+                android:textSize="10sp"
+                android:letterSpacing="0.1"/>
+
+            <TextView
+                android:id="@+id/tvRpmValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:layout_marginBottom="24dp"
+                android:text="2,450"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:textSize="32sp"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- CENTER: MULTI-INFORMATION DISPLAY (G-METER) -->
+    <LinearLayout
+        android:id="@+id/layoutCenter"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        app:layout_constraintTop_toTopOf="@id/cardRpm"
+        app:layout_constraintBottom_toBottomOf="@id/cardRpm"
+        app:layout_constraintStart_toEndOf="@id/cardRpm"
+        app:layout_constraintEnd_toStartOf="@id/cardSpeed">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="G meter"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"/>
+
+        <TextView
+            android:id="@+id/tvGisCenter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0.92"
+            android:textColor="#E53935"
+            android:textStyle="bold"
+            android:textSize="24sp"
+            android:layout_marginBottom="16dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Reset values with OK"
+            android:textColor="#888888"
+            android:textSize="11sp"/>
+    </LinearLayout>
+
+    <!-- RIGHT: SPEEDOMETER -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardSpeed"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:cardBackgroundColor="#121212"
+        app:cardCornerRadius="120dp"
+        app:cardElevation="8dp"
+        app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintWidth_percent="0.38"
+        app:layout_constraintTop_toBottomOf="@id/layoutTopInfo"
+        app:layout_constraintBottom_toTopOf="@id/layoutBottomInfo"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <TextView
+                android:id="@+id/tvSpeedValue"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:text="85"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF"
+                android:textSize="56sp"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toBottomOf="@id/tvSpeedValue"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                android:text="km/h"
+                android:textColor="#888888"
+                android:textSize="12sp"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- BOTTOM INFO BAR -->
+    <LinearLayout
+        android:id="@+id/layoutBottomInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🚗 1243 km    🕒 10:20"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:layout_marginEnd="32dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="132.2 km    🌡️ +17.0 °C"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"/>
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
