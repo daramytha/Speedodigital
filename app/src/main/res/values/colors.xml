@@ -1,0 +1,7 @@
+<resources>
+    <color name="black_background">#0A0A0A</color>
+    <color name="card_background">#121212</color>
+    <color name="sport_red">#E53935</color>
+    <color name="text_white">#FFFFFF</color>
+    <color name="text_gray">#888888</color>
+</resources>
