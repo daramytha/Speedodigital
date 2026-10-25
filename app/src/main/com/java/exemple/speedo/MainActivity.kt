@@ -18,14 +18,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvSpeedValue: TextView
     
     private var obdConnection: BluetoothObdConnection? = null
-    
-    // PERBAIKAN 1: getMainThreadLooper() diubah menjadi getMainLooper()
-    private val handler = Handler(Looper.getMainLooper()) 
+    private val handler = Handler(Looper.getMainLooper())
     private var isRunning = false
 
     companion object {
         private const val REQUEST_CODE_PERMISSIONS = 101
-        // Ganti dengan MAC Address adapter ELM327 Anda yang sebenarnya
+        // Pastikan MAC Address ini benar-benar ada di daftar Bluetooth HP kamu
         private const val DEVICE_ADDRESS = "00:1D:A5:00:22:33" 
     }
 
@@ -33,18 +31,18 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Hubungkan komponen UI dengan aman
         tvRpmValue = findViewById(R.id.tvRpmValue)
         tvSpeedValue = findViewById(R.id.tvSpeedValue)
 
-        // Set nilai awal agar UI langsung tampil normal tanpa menunggu data
         tvRpmValue.text = "0"
         tvSpeedValue.text = "0"
 
-        // Periksa izin Bluetooth
+        // Cek izin. Jika belum ada, minta izin dulu.
         if (checkBluetoothPermissions()) {
+            // Izin sudah ada, baru hubungkan
             initBluetoothSafe()
         } else {
+            // Minta izin. (Aplikasi TIDAK akan crash karena belum konek bluetooth)
             requestBluetoothPermissions()
         }
     }
@@ -77,56 +75,62 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // Ini akan terpanggil OTOMATIS setelah user klik "Allow" atau "Deny"
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
+                // Jika user klik "Allow", baru kita konek
                 initBluetoothSafe()
             } else {
-                Toast.makeText(this, "Izin Bluetooth ditolak. Aplikasi berjalan dalam mode offline.", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Izin Bluetooth ditolak. Tidak bisa konek OBD2.", Toast.LENGTH_LONG).show()
             }
         }
     }
 
     private fun initBluetoothSafe() {
+        // Tampilkan pesan sedang mencoba konek
+        Toast.makeText(this, "Mencoba terhubung ke OBD2...", Toast.LENGTH_SHORT).show()
+
         Thread {
             try {
+                // Coba hubungkan
                 val connection = BluetoothObdConnection(DEVICE_ADDRESS)
                 if (connection.connect()) {
                     obdConnection = connection
+                    runOnUiThread {
+                        Toast.makeText(this, "Berhasil terhubung!", Toast.LENGTH_SHORT).show()
+                    }
                     startPollingData()
                 } else {
                     runOnUiThread {
-                        Toast.makeText(this, "Gagal terhubung ke OBD2. Periksa pairing Bluetooth Anda.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, "Gagal terhubung. Pastikan ELM327 menyala & MAC Address benar.", Toast.LENGTH_LONG).show()
                     }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
                 runOnUiThread {
-                    Toast.makeText(this, "Error Bluetooth: ${e.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
         }.start()
     }
 
-    // PERBAIKAN 2: Proses polling dipindah ke Background Thread agar UI tidak nge-lag/ANR
     private fun startPollingData() {
         isRunning = true
         
+        // Gunakan Thread terpisah untuk mengambil data agar UI tidak macet
         Thread {
             while (isRunning) {
                 try {
                     val connection = obdConnection
                     if (connection != null) {
-                        // 1. Minta Data RPM (PID: 010C)
                         val rpmResponse = connection.sendRawCommand("010C")
                         val rpm = parseRpm(rpmResponse)
                         
-                        // 2. Minta Data Kecepatan (PID: 010D)
                         val speedResponse = connection.sendRawCommand("010D")
                         val speed = parseSpeed(speedResponse)
 
-                        // Kembali ke Main Thread HANYA untuk update UI
                         runOnUiThread {
                             if (isRunning) {
                                 tvRpmValue.text = rpm.toString()
@@ -138,9 +142,8 @@ class MainActivity : AppCompatActivity() {
                     e.printStackTrace()
                 }
 
-                // Jeda 300ms menggunakan Thread.sleep (karena kita sudah di background thread)
                 try {
-                    Thread.sleep(300)
+                    Thread.sleep(300) // Jeda 300ms
                 } catch (e: InterruptedException) {
                     break
                 }
