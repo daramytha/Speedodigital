@@ -18,11 +18,15 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvSpeedValue: TextView
     
     private var obdConnection: BluetoothObdConnection? = null
-    private val handler = Handler(Looper.getMainThreadLooper())
+    
+    // PERBAIKAN 1: getMainThreadLooper() diubah menjadi getMainLooper()
+    private val handler = Handler(Looper.getMainLooper()) 
     private var isRunning = false
 
     companion object {
         private const val REQUEST_CODE_PERMISSIONS = 101
+        // Ganti dengan MAC Address adapter ELM327 Anda yang sebenarnya
+        private const val DEVICE_ADDRESS = "00:1D:A5:00:22:33" 
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -85,12 +89,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun initBluetoothSafe() {
-        // Ganti dengan MAC Address adapter ELM327 Anda yang sebenarnya
-        val deviceAddress = "00:1D:A5:00:22:33" 
-
         Thread {
             try {
-                val connection = BluetoothObdConnection(deviceAddress)
+                val connection = BluetoothObdConnection(DEVICE_ADDRESS)
                 if (connection.connect()) {
                     obdConnection = connection
                     startPollingData()
@@ -101,16 +102,19 @@ class MainActivity : AppCompatActivity() {
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
+                runOnUiThread {
+                    Toast.makeText(this, "Error Bluetooth: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
             }
         }.start()
     }
 
+    // PERBAIKAN 2: Proses polling dipindah ke Background Thread agar UI tidak nge-lag/ANR
     private fun startPollingData() {
         isRunning = true
-        handler.post(object : Runnable {
-            override fun run() {
-                if (!isRunning) return
-
+        
+        Thread {
+            while (isRunning) {
                 try {
                     val connection = obdConnection
                     if (connection != null) {
@@ -122,19 +126,26 @@ class MainActivity : AppCompatActivity() {
                         val speedResponse = connection.sendRawCommand("010D")
                         val speed = parseSpeed(speedResponse)
 
+                        // Kembali ke Main Thread HANYA untuk update UI
                         runOnUiThread {
-                            tvRpmValue.text = rpm.toString()
-                            tvSpeedValue.text = speed.toString()
+                            if (isRunning) {
+                                tvRpmValue.text = rpm.toString()
+                                tvSpeedValue.text = speed.toString()
+                            }
                         }
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
 
-                // Ambil data setiap 300ms agar stabil
-                handler.postDelayed(this, 300)
+                // Jeda 300ms menggunakan Thread.sleep (karena kita sudah di background thread)
+                try {
+                    Thread.sleep(300)
+                } catch (e: InterruptedException) {
+                    break
+                }
             }
-        })
+        }.start()
     }
 
     private fun parseRpm(response: String): Int {
