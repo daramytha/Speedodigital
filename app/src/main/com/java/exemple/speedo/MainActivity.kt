@@ -16,7 +16,8 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var tvRpmValue: TextView
     private lateinit var tvSpeedValue: TextView
-    private lateinit var obdConnection: BluetoothObdConnection
+    
+    private var obdConnection: BluetoothObdConnection? = null
     private val handler = Handler(Looper.getMainThreadLooper())
     private var isRunning = false
 
@@ -28,12 +29,17 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // Hubungkan komponen UI dengan aman
         tvRpmValue = findViewById(R.id.tvRpmValue)
         tvSpeedValue = findViewById(R.id.tvSpeedValue)
 
-        // Periksa izin Bluetooth saat aplikasi dibuka
+        // Set nilai awal agar UI langsung tampil normal tanpa menunggu data
+        tvRpmValue.text = "0"
+        tvSpeedValue.text = "0"
+
+        // Periksa izin Bluetooth
         if (checkBluetoothPermissions()) {
-            initBluetoothAndPoll()
+            initBluetoothSafe()
         } else {
             requestBluetoothPermissions()
         }
@@ -71,22 +77,27 @@ class MainActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }) {
-                initBluetoothAndPoll()
+                initBluetoothSafe()
             } else {
-                Toast.makeText(this, "Izin Bluetooth diperlukan untuk menghubungkan OBD2!", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, "Izin Bluetooth ditolak. Aplikasi berjalan dalam mode offline.", Toast.LENGTH_LONG).show()
             }
         }
     }
 
-    private fun initBluetoothAndPoll() {
+    private fun initBluetoothSafe() {
         // Ganti dengan MAC Address adapter ELM327 Anda yang sebenarnya
         val deviceAddress = "00:1D:A5:00:22:33" 
 
         Thread {
             try {
-                obdConnection = BluetoothObdConnection(deviceAddress)
-                if (obdConnection.connect()) {
+                val connection = BluetoothObdConnection(deviceAddress)
+                if (connection.connect()) {
+                    obdConnection = connection
                     startPollingData()
+                } else {
+                    runOnUiThread {
+                        Toast.makeText(this, "Gagal terhubung ke OBD2. Periksa pairing Bluetooth Anda.", Toast.LENGTH_SHORT).show()
+                    }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -101,21 +112,27 @@ class MainActivity : AppCompatActivity() {
                 if (!isRunning) return
 
                 try {
-                    // 1. Minta Data RPM (PID: 010C)
-                    val rpmResponse = obdConnection.sendRawCommand("010C")
-                    val rpm = parseRpm(rpmResponse)
-                    runOnUiThread { tvRpmValue.text = rpm.toString() }
+                    val connection = obdConnection
+                    if (connection != null) {
+                        // 1. Minta Data RPM (PID: 010C)
+                        val rpmResponse = connection.sendRawCommand("010C")
+                        val rpm = parseRpm(rpmResponse)
+                        
+                        // 2. Minta Data Kecepatan (PID: 010D)
+                        val speedResponse = connection.sendRawCommand("010D")
+                        val speed = parseSpeed(speedResponse)
 
-                    // 2. Minta Data Kecepatan (PID: 010D)
-                    val speedResponse = obdConnection.sendRawCommand("010D")
-                    val speed = parseSpeed(speedResponse)
-                    runOnUiThread { tvSpeedValue.text = speed.toString() }
+                        runOnUiThread {
+                            tvRpmValue.text = rpm.toString()
+                            tvSpeedValue.text = speed.toString()
+                        }
+                    }
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
 
-                // Ambil data setiap 200ms
-                handler.postDelayed(this, 200)
+                // Ambil data setiap 300ms agar stabil
+                handler.postDelayed(this, 300)
             }
         })
     }
@@ -148,9 +165,7 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         isRunning = false
         try {
-            if (::obdConnection.isInitialized) {
-                obdConnection.disconnect()
-            }
+            obdConnection?.disconnect()
         } catch (e: Exception) {
             e.printStackTrace()
         }
